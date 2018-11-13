@@ -9,4 +9,5 @@ import java.util.List;
 public interface UsersManagerLocal extends IGenericDAO<User, Long> {
     User findByEmail(String mail);
     List<User> findByQuery(String query);
+    User createAndReturnUser(User user);
 }

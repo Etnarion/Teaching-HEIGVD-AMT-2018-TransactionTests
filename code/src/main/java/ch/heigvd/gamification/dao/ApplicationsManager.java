@@ -4,6 +4,8 @@ import ch.heigvd.gamification.model.Application;
 import ch.heigvd.gamification.model.User;
 
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.persistence.NoResultException;
 import java.util.LinkedList;
 import java.util.List;
@@ -42,5 +44,13 @@ public class ApplicationsManager extends GenericDAO<Application, Long> implement
             //TODO: LOG
         }
         return applications;
+    }
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    @Override
+    public Application createAndReturnApplication(Application application) {
+        em.persist(application);
+        em.flush();
+        return application;
     }
 }

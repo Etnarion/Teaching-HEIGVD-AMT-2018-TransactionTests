@@ -28,45 +28,6 @@
                     <img src="static/images/gamification.png" height="40" class="d-inline mr-1" alt="">
                     <div class="d-inline" height="40">Gamification API</div>
                 </a>
-
-                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-
-                <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                    <c:choose>
-                        <c:when test="${user != null}">
-                            <ul class="navbar-nav">
-                                <c:if test="${admin}">
-                                    <li class="nav-item">
-                                        <a class="nav-link" href="pages/users">Users</a>
-                                    </li>
-                                </c:if>
-                                <li class="nav-item">
-                                    <a class="nav-link" href="pages/applications?user=${id}">Applications</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" href="pages/profile">Profile</a>
-                                </li>
-                            </ul>
-                            <ul class="navbar-nav ml-auto">
-                                <li class="nav-item">
-                                    <a class="nav-link" href="pages/logout">Logout</a>
-                                </li>
-                            </ul>
-                        </c:when>
-                        <c:otherwise>
-                            <ul class="navbar-nav ml-auto">
-                                <li class="nav-item">
-                                    <a class="nav-link" href="pages/register">Register</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" href="pages/login">Login</a>
-                                </li>
-                            </ul>
-                        </c:otherwise>
-                    </c:choose>
-                </div>
             </nav>
         </div>
         <div class="container">

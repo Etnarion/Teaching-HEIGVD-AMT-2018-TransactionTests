@@ -1,52 +1,51 @@
-# Teaching-HEIGVD-AMT-2018-Project
-## Introduction
+# Non-functional testing - Transactions
+In this report, we are going to take a look at Java EE transactions. It is possible to apply a transaction attribute at the class-level to specify its default transaction attibute or at method-level for a more precise setting. Six different attributes are available and are described as follow.
 
-The first goal of the project is to design and build a **gamification engine**, which you will offer to third-party developers in a **SaaS** model. The second goal of the project is to design and implement a **demonstration** to show you system in action. 
+### NOT_SUPPORTED
+A NOTSUPPORTED_ method is guaranteed to never be executed in a transaction. If the caller attempts to invoke the method inside of a transaction, the container will suspend the caller's transaction, execute the method, then resume the caller's transaction.
 
-The project will be delivered in 3 phases, with corresponding to **3 Work Packages** (WPs). Every WP will be evaluated with a grade, with the following weights:
+### SUPPORTS
+A SUPPORTS method is guaranteed to adopt the exact transactional state of the caller. These methods can be invoked by caller's inside or outside of a transaction. The container will do nothing to change that state.
 
-| WP # | WP Title                                                     | Weight | Deadline                    |
-| ---- | ------------------------------------------------------------ | ------ | --------------------------- |
-| 1    | UI to manage **developer accounts** and **applications** (with bare-bone Java EE technologies). Implementation of presentation, business, integration and resource tiers. | 35%    | Monday, November 5th 2018   |
-| 2    | **Game engine** with REST APIs (UI optional).                | 40%    | Monday, December  17th 2018 |
-| 3    | **Demonstration** showing that it is possible to gamify an existing application. End-to-end scenario and presentation of information in a UI. | 25%    | Monday, January 14th 2019   |
+### REQUIRED
+It is the default attribute. A REQUIRED method is guaranteed to always be executed in a transaction. If the caller attempts to invoke the method outside of a transaction, the container will start a transaction, execute the method, then commit the transaction.
 
-### Gamification
+### REQUIRES_NEW
+A REQUIRESNEW_ method is guaranteed to always be executed in a transaction. If the caller attempts to invoke the method inside or outside of a transaction, the container will still start a transaction, execute the method, then commit the transaction. Any transaction the caller may have in progress will be suspended before the method execution then resumed afterward.
 
-Gamification is defined as the application of **game principles** in contexts that are not related to games: healthcare, education, commerce, etc. Very often, gamification is used to lead users to adopt a certain **behaviour**.  
+### MANDATORY
+A MANDATORY method is guaranteed to always be executed in a transaction. However, it's the caller's job to take care of suppling the transaction. If the caller attempts to invoke the method outside of a transaction, then the container will block the call and throw them an exception.
 
-In healthcare, the goal might be to encourage users to exercise more or to quit smoking. In education, the goal might be to encourage students to interact with each other. In commerce, the goal might be to lead consumers to buy more products. The game principles are mechanics like reputation points, badges, achievements, etc. 
+### NEVER
+A NEVER method is guaranteed to never be executed in a transaction. However, it's the caller's job to ensure there is no transaction. If the caller attempts to invoke the method inside of a transaction, then the container will block the call and throw them an exception.
 
-One service that makes use of gamification is [**Stackoverflow**](https://stackoverflow.com/users/1341338/olivier-liechti). When registered users ask questions, provide answers, add comments, they are rewarded with points. They can also be punished and have points deducted from their reputation. Users can also unlock badges by performing certain sequences of actions. On top of the raw metrics, Stackoverflow provides analytics dashboards that show how users compare with each other (e.g. rankings in various timeframes) and how the reputation has evolved over time.
+## Experimentation with a test application
+To test this feature, we set up a test application from the Gamification project sources. It contains a new EJB named "AppAndUserCreator" that create a new user with UserManager EJB and create a new application with ApplicationManager EJB. The goal of this experiment is to show that it is possible with transaction attributes to define which data should be rolled back in case of a problem and which data should not.  
 
-### Gamification engine
+![alt text](./img/appanduser.png)
 
-From an architecture point of view, the creators of Stackoverflow perhaps have implemented everything by themselves. In other words, they have implemented the core business logic of their domain (collaborative Q&As) and also implemented the gamification features. We do not know the internal architecture of their software, but we can imagine a big Java EE application with services that deal with these two aspects.
+The AppAndUserCreator EJB has a createAppAndUser() method that first creates a user then creates an application.  
+The UserManager method used to create a new user has the attribute REQUIRED and the ApplicationManager method used to create an application has the attribute REQUIRES_NEW. It means that when creating a new application with this method, a new transaction will be started to execute the method.  
 
-The same could be true of other applications. Think of a gamified academic planning system, a gamified e-commerce site, a gamified sports tracker. They are different applications but share very similar needs in terms of gamification: managing reputation points, managing badges, etc. Hence, there is an opportunity to **extract this generic behaviour in a service**. This is what we call a **gamification engine**.
+![alt text](./img/req.png)
 
-As a matter of fact, there are different ways to make generic behaviour available to several applications:
+![alt text](./img/reqnew.png)
 
-* One way is to develop libraries and frameworks. In this case, third-party developers package what we provide with their code and create a complete system. In Java EE terms, this can be done by adding .jar files (the libraries) to the .war file (the whole application). This is **NOT** the approach that we will take in this project. 
-* Instead, we will use the cloud approach and deliver our software as an online service (SaaS). This means that we will not only write code. We will also deploy and operate it. The third-party application developers will be able to use our gamification engine by making call to a REST API that we will expose.
+As we can see in the createAppAndUser() method, it throws an exception after inserting a user and an application. Now four outcomes are possible : 
+1. Both the user and the application are rolled back. The database stays in its original state.
+2. The user is rolled back but not the application.
+3. The application is rolled back but not the application.
+4. Neither are rolled back.  
 
-### REST APIs exposed by the gamification engine
+In our case only the user is rolled back. That's because we set the transaction attribute of the create method of the application manager class to REQUIRE_NEW. A new transaction is created for this method only and when finished, commits the data. The first transaction then continues and a runtime error is thrown, rollbacking the user creation.  
 
-It is too early to get into the specifics of the REST API that our gamification engine should expose. But at a high-level:
+Bellow are the result of our experiment. We can see that the user count does not increment but the application count does.
 
-* There should a first endpoint that applications use to notify us that one of their user has done something in their application. Something like `/events`. This is the endpoint that Stackoverflow would use to tell us that the event "Bob has answered one question" has occurred. This is the same endpoint that an e-commerce site would use to tell us that "Alice has bought a product that costs more than 200 CHF". The payloads POSTed on this endpoint should be event objects, with properties.
-* There should be a second endpoint, which application developers use to configure the rules. Something like `/rules`. How to express and evaluate rules is a question that you will have to answer during the second part of the semester. In simple terms, a rule states that "IF an event comes in with certain properties, THEN do this action". An action might be to add or remove reputation points, to award a badge, etc. 
-* There should be other endpoints, to manage accounts, applications, etc.
-
-## Work packages
-
-The work pages are described in these pages:
-
-* [Work package 1](WP1.md)
-* Work Package 2 (coming later)
-* Work Package 3 (coming later)
-
-## Groups
-
-**You will work on the project in teams of 3-4 students.** Please register [here](https://goo.gl/forms/hcmGxuVB3F6VqSBR2) and if you use a private repo, please invite us.
-
+```
+User count before : 30
+Application count before : 170925
+Error during app and user creation
+User count after : 30
+Application count after : 170926
+```
+Repository of test application : 

@@ -4,10 +4,14 @@ import ch.heigvd.gamification.model.User;
 
 import javax.annotation.Resource;
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.persistence.NoResultException;
 import javax.sql.DataSource;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Random;
 
 @Stateless
 public class UsersManager extends GenericDAO<User, Long> implements UsersManagerLocal {
@@ -34,5 +38,13 @@ public class UsersManager extends GenericDAO<User, Long> implements UsersManager
             //TODO: LOG
         }
         return users;
+    }
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    @Override
+    public User createAndReturnUser(User user){
+        em.persist(user);
+        em.flush();
+        return user;
     }
 }

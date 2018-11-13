@@ -11,4 +11,5 @@ public interface ApplicationsManagerLocal extends IGenericDAO<Application, Long>
     List<Application> findByUser(User user);
     List<Application> findByUserByPage(User user, int pageSize, int pageIndex);
     List<Application> findByQuery(User user, String query);
+    Application createAndReturnApplication(Application application);
 }
