@@ -48,4 +48,4 @@ Error during app and user creation
 User count after : 30
 Application count after : 170926
 ```
-Repository of test application : 
+Repository of test application : https://github.com/Etnarion/Teaching-HEIGVD-AMT-2018-TransactionTests
